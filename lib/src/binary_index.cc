@@ -75,7 +75,83 @@ void ImageIndex::addImage(const unsigned image_id,
 
   nimages_++;
 }
+void ImageIndex::addvWords(const unsigned image_id,
+                          const unsigned global_image_id,
+                          const unsigned agent_id,
+                          const std::vector<cv::KeyPoint>& kps,
+                          const cv::Mat& descs,
+                          const std::vector<cv::DMatch>& matches)
+{    
+  // --- Adding new features
+  // All features
+  std::set<int> points;
+  for (unsigned feat_ind = 0; feat_ind < kps.size(); feat_ind++) {
+    points.insert(feat_ind);
+  }
 
+  // Matched features
+  std::set<int> matched_points;
+  for (unsigned match_ind = 0; match_ind < matches.size(); match_ind++) {
+    matched_points.insert(matches[match_ind].queryIdx);
+  }
+
+  // Computing the difference
+  std::set<int> diff;
+  std::set_difference(points.begin(), points.end(),
+                      matched_points.begin(), matched_points.end(),
+                      std::inserter(diff, diff.end()));
+
+  // Inserting new features into the index.
+  for (auto it = diff.begin(); it != diff.end(); it++) {
+    int index = *it;
+    cv::Mat desc = descs.row(index);
+    BinaryDescriptorPtr d = std::make_shared<BinaryDescriptor>(desc);
+    insertDescriptor(d);
+
+    // Creating the inverted index item
+    InvIndexItem item;
+    item.image_id = image_id;
+    item.global_image_id = global_image_id;
+    item.agent_id = agent_id;
+    item.pt = kps[index].pt;
+    item.dist = 0.0;
+    item.kp_ind = index;
+    inv_index_[d].push_back(item);
+  }
+
+  // --- Updating the matched descriptors into the index
+  for (unsigned match_ind = 0; match_ind < matches.size(); match_ind++) {
+    int qindex = matches[match_ind].queryIdx;
+    int tindex = matches[match_ind].trainIdx;
+
+    BinaryDescriptorPtr q_d = std::make_shared<BinaryDescriptor>
+                                                            (descs.row(qindex));
+    BinaryDescriptorPtr t_d = id_to_desc_[tindex];
+
+    // Merge and replace according to the merging policy
+    if (merge_policy_ == MERGE_POLICY_AND) {
+      *t_d &= *q_d;
+    } else if (merge_policy_ == MERGE_POLICY_OR) {
+      *t_d |= *q_d;
+    }
+
+    // Creating the inverted index item
+    InvIndexItem item;
+    item.image_id = image_id;
+    item.agent_id = agent_id;
+    item.pt = kps[qindex].pt;
+    item.dist = matches[match_ind].distance;
+    item.kp_ind = qindex;
+    inv_index_[t_d].push_back(item);
+  }
+
+  // Deleting unstable features
+  if (purge_descriptors_) {
+    purgeDescriptors(image_id);
+  }
+
+  nimages_++;
+}
 void ImageIndex::addImage(const unsigned image_id,
                 const std::vector<cv::KeyPoint>& kps,
                 const cv::Mat& descs,
@@ -146,6 +222,62 @@ void ImageIndex::addImage(const unsigned image_id,
   }
 
   nimages_++;
+}
+
+void ImageIndex::searchImagesRestrictive(const cv::Mat& descs,
+                                        const std::vector<cv::DMatch>& gmatches,
+                                        std::unordered_map<int,ImageMatch>* img_matches,
+                                        bool sort) {
+  // Initializing the resulting structure
+  // img_matches->resize(nimages_);
+  // for (unsigned i = 0; i < nimages_; i++) {
+  //   img_matches->at(i).image_id = i;
+  // }
+
+  for (unsigned i = 0; i < gmatches.size(); i++)
+  {
+    
+  }
+
+  // Counting the number of each word in the current document
+  std::unordered_map<int, int> nwi_map;
+  for (unsigned match_index = 0; match_index < gmatches.size(); match_index++) {
+    int train_idx = gmatches[match_index].trainIdx;
+    // Updating nwi_map, number of occurrences of a word in an image.
+    if (nwi_map.count(train_idx)) {
+      nwi_map[train_idx]++;
+    } else {
+      nwi_map[train_idx] = 1;
+    }
+  }
+
+  // We process all the matchings again to increase the scores
+  for (unsigned match_index = 0; match_index < gmatches.size(); match_index++) {
+    int train_idx = gmatches[match_index].trainIdx;
+    BinaryDescriptorPtr desc = id_to_desc_[train_idx];
+
+    // Computing the TF term
+    double tf = static_cast<double>(nwi_map[train_idx]) / descs.rows;
+
+    // Computing the IDF term
+    std::unordered_set<unsigned> nw;
+    for (unsigned i = 0; i < inv_index_[desc].size(); i++) {
+      nw.insert(inv_index_[desc][i].image_id);
+    }
+    double idf = log(static_cast<double>(nimages_) / nw.size());
+
+    // Computing the final TF-IDF weighting term
+    double tfidf = tf * idf;
+
+    for (unsigned i = 0; i < inv_index_[desc].size(); i++) {
+        int im = inv_index_[desc][i].image_id;
+        img_matches->at(im).score += tfidf;
+    }
+  }
+
+  if (sort) {
+    std::sort(img_matches->begin(), img_matches->end());
+  }
 }
 
 void ImageIndex::searchImages(const cv::Mat& descs,

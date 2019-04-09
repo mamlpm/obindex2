@@ -38,21 +38,29 @@ enum MergePolicy {
 struct InvIndexItem {
   InvIndexItem() :
       image_id(0),
+      agent_id(0),
+      global_image_id(0),
       pt(0.0f, 0.0f),
       dist(DBL_MAX),
       kp_ind(-1) {}
 
-  InvIndexItem(const int id,
+  InvIndexItem(const int Lid,
+               const int ag_id,
+               const int glob_id,
                const cv::Point2f kp,
                const double d,
                const int kp_i = -1) :
-  image_id(id),
+  image_id(Lid),
+  agent_id(ag_id),
+  global_image_id(glob_id),
   pt(kp),
   dist(d),
   kp_ind(kp_i)
   {}
 
   unsigned image_id;
+  unsigned agent_id;
+  unsigned global_image_id;
   cv::Point2f pt;
   double dist;
   int kp_ind;
@@ -92,10 +100,20 @@ class ImageIndex {
   void addImage(const unsigned image_id,
                 const std::vector<cv::KeyPoint>& kps,
                 const cv::Mat& descs);
+  void addvWords (const unsigned image_id,
+                 const unsigned global_image_id,
+                 const unsigned agent_id,
+                 const std::vector<cv::KeyPoint>& kps,
+                 const cv::Mat& descs,
+                 const std::vector<cv::DMatch>& matches);
   void addImage(const unsigned image_id,
                 const std::vector<cv::KeyPoint>& kps,
                 const cv::Mat& descs,
                 const std::vector<cv::DMatch>& matches);
+  void searchImagesRestrictive(const cv::Mat& descs,
+                              const std::vector<cv::DMatch>& gmatches,
+                              std::unordered_map<int,ImageMatch>* img_matches,
+                              bool sort);
   void searchImages(const cv::Mat& descs,
                     const std::vector<cv::DMatch>& gmatches,
                     std::vector<ImageMatch>* img_matches,
