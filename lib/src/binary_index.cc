@@ -226,7 +226,7 @@ void ImageIndex::addImage(const unsigned image_id,
 
 void ImageIndex::searchImagesRestrictive(const cv::Mat& descs,
                                         const std::vector<cv::DMatch>& gmatches,
-                                        std::unordered_map<int,ImageMatch>* img_matches,
+                                        std::unordered_map<int, ImageMatch>* img_matches,
                                         bool sort) {
   // Initializing the resulting structure
   // img_matches->resize(nimages_);
@@ -234,9 +234,14 @@ void ImageIndex::searchImagesRestrictive(const cv::Mat& descs,
   //   img_matches->at(i).image_id = i;
   // }
 
+  // Initializing the resulting structure
   for (unsigned i = 0; i < gmatches.size(); i++)
   {
-    
+    if (!img_matches->count(gmatches[i].trainIdx))
+    {
+      img_matches->at(gmatches[i].trainIdx).score = 0.0;
+      img_matches->at(gmatches[i].trainIdx).image_id = 0;
+    }
   }
 
   // Counting the number of each word in the current document
@@ -275,9 +280,9 @@ void ImageIndex::searchImagesRestrictive(const cv::Mat& descs,
     }
   }
 
-  if (sort) {
-    std::sort(img_matches->begin(), img_matches->end());
-  }
+  // if (sort) {
+  //   std::sort(img_matches->begin(), img_matches->end());
+  // }
 }
 
 void ImageIndex::searchImages(const cv::Mat& descs,

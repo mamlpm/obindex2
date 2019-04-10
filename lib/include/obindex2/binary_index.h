@@ -112,7 +112,7 @@ class ImageIndex {
                 const std::vector<cv::DMatch>& matches);
   void searchImagesRestrictive(const cv::Mat& descs,
                               const std::vector<cv::DMatch>& gmatches,
-                              std::unordered_map<int,ImageMatch>* img_matches,
+                              std::unordered_map<int, ImageMatch>* img_matches,
                               bool sort);
   void searchImages(const cv::Mat& descs,
                     const std::vector<cv::DMatch>& gmatches,
