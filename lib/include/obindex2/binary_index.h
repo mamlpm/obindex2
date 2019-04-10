@@ -27,36 +27,38 @@
 
 #include "obindex2/binary_tree.h"
 
-namespace obindex2 {
+namespace obindex2
+{
 
-enum MergePolicy {
+enum MergePolicy
+{
   MERGE_POLICY_NONE,
   MERGE_POLICY_AND,
   MERGE_POLICY_OR
 };
 
-struct InvIndexItem {
-  InvIndexItem() :
-      image_id(0),
-      agent_id(0),
-      global_image_id(0),
-      pt(0.0f, 0.0f),
-      dist(DBL_MAX),
-      kp_ind(-1) {}
+struct InvIndexItem
+{
+  InvIndexItem() : image_id(0),
+                   agent_id(0),
+                   global_image_id(0),
+                   pt(0.0f, 0.0f),
+                   dist(DBL_MAX),
+                   kp_ind(-1) {}
 
   InvIndexItem(const int Lid,
                const int ag_id,
                const int glob_id,
                const cv::Point2f kp,
                const double d,
-               const int kp_i = -1) :
-  image_id(Lid),
-  agent_id(ag_id),
-  global_image_id(glob_id),
-  pt(kp),
-  dist(d),
-  kp_ind(kp_i)
-  {}
+               const int kp_i = -1) : image_id(Lid),
+                                      agent_id(ag_id),
+                                      global_image_id(glob_id),
+                                      pt(kp),
+                                      dist(d),
+                                      kp_ind(kp_i)
+  {
+  }
 
   unsigned image_id;
   unsigned agent_id;
@@ -66,14 +68,13 @@ struct InvIndexItem {
   int kp_ind;
 };
 
-struct ImageMatch {
-  ImageMatch() :
-      image_id(-1),
-      score(0.0) {}
+struct ImageMatch
+{
+  ImageMatch() : image_id(-1),
+                 score(0.0) {}
 
-  explicit ImageMatch(const int id, const double sc = 0.0) :
-      image_id(id),
-      score(sc) {}
+  explicit ImageMatch(const int id, const double sc = 0.0) : image_id(id),
+                                                             score(sc) {}
 
   int image_id;
   double score;
@@ -81,13 +82,15 @@ struct ImageMatch {
   bool operator<(const ImageMatch &lcr) const { return score > lcr.score; }
 };
 
-struct PointMatches {
+struct PointMatches
+{
   std::vector<cv::Point2f> query;
   std::vector<cv::Point2f> train;
 };
 
-class ImageIndex {
- public:
+class ImageIndex
+{
+public:
   // Constructors
   explicit ImageIndex(const unsigned k = 16,
                       const unsigned s = 150,
@@ -98,50 +101,56 @@ class ImageIndex {
 
   // Methods
   void addImage(const unsigned image_id,
-                const std::vector<cv::KeyPoint>& kps,
-                const cv::Mat& descs);
-  void addvWords (const unsigned image_id,
+                const std::vector<cv::KeyPoint> &kps,
+                const cv::Mat &descs);
+  void addvWords(const unsigned image_id,
                  const unsigned global_image_id,
                  const unsigned agent_id,
-                 const std::vector<cv::KeyPoint>& kps,
-                 const cv::Mat& descs,
-                 const std::vector<cv::DMatch>& matches);
+                 const std::vector<cv::KeyPoint> &kps,
+                 const cv::Mat &descs,
+                 const std::vector<cv::DMatch> &matches);
   void addImage(const unsigned image_id,
-                const std::vector<cv::KeyPoint>& kps,
-                const cv::Mat& descs,
-                const std::vector<cv::DMatch>& matches);
-  void searchImagesRestrictive(const cv::Mat& descs,
-                              const std::vector<cv::DMatch>& gmatches,
-                              std::unordered_map<int, ImageMatch>* img_matches,
-                              bool sort);
-  void searchImages(const cv::Mat& descs,
-                    const std::vector<cv::DMatch>& gmatches,
-                    std::vector<ImageMatch>* img_matches,
+                const std::vector<cv::KeyPoint> &kps,
+                const cv::Mat &descs,
+                const std::vector<cv::DMatch> &matches);
+  void searchImagesRestrictive(const cv::Mat &descs,
+                               const std::vector<cv::DMatch> &gmatches,
+                               std::unordered_map<unsigned, ImageMatch> *img_matches,
+                               unsigned currentAgent,
+                               bool sort,
+                               unsigned p);
+  void searchImages(const cv::Mat &descs,
+                    const std::vector<cv::DMatch> &gmatches,
+                    std::vector<ImageMatch> *img_matches,
                     bool sort = true);
-  void searchDescriptors(const cv::Mat& descs,
-                         std::vector<std::vector<cv::DMatch> >* matches,
+  void searchDescriptors(const cv::Mat &descs,
+                         std::vector<std::vector<cv::DMatch>> *matches,
                          const unsigned knn = 2,
                          const unsigned checks = 32);
   void deleteDescriptor(const unsigned desc_id);
-  void getMatchings(const std::vector<cv::KeyPoint>& query_kps,
-                    const std::vector<cv::DMatch>& matches,
-                    std::unordered_map<unsigned, PointMatches>* point_matches);
-  inline unsigned numImages() {
+  void getMatchings(const std::vector<cv::KeyPoint> &query_kps,
+                    const std::vector<cv::DMatch> &matches,
+                    std::unordered_map<unsigned, PointMatches> *point_matches);
+  inline unsigned numImages()
+  {
     return nimages_;
   }
 
-  inline unsigned numDescriptors() {
+  inline unsigned numDescriptors()
+  {
     return dset_.size();
   }
 
-  inline void rebuild() {
-    if (init_) {
+  inline void rebuild()
+  {
+    if (init_)
+    {
       trees_.clear();
       initTrees();
     }
   }
 
- private:
+private:
   BinaryDescriptorSet dset_;
   unsigned k_;
   unsigned s_;
@@ -155,15 +164,16 @@ class ImageIndex {
 
   std::vector<BinaryTreePtr> trees_;
   std::unordered_map<BinaryDescriptorPtr,
-                     std::vector<InvIndexItem> > inv_index_;
+                     std::vector<InvIndexItem>>
+      inv_index_;
   std::unordered_map<BinaryDescriptorPtr, unsigned> desc_to_id_;
   std::unordered_map<unsigned, BinaryDescriptorPtr> id_to_desc_;
   std::list<BinaryDescriptorPtr> recently_added_;
 
   void initTrees();
   void searchDescriptor(BinaryDescriptorPtr q,
-                        std::vector<BinaryDescriptorPtr>* neigh,
-                        std::vector<double>* distances,
+                        std::vector<BinaryDescriptorPtr> *neigh,
+                        std::vector<double> *distances,
                         unsigned knn = 2,
                         unsigned checks = 32);
   void insertDescriptor(BinaryDescriptorPtr q);
@@ -171,6 +181,6 @@ class ImageIndex {
   void purgeDescriptors(const unsigned curr_img);
 };
 
-}  // namespace obindex2
+} // namespace obindex2
 
-#endif  // LIB_INCLUDE_OBINDEX2_BINARY_INDEX_H_
+#endif // LIB_INCLUDE_OBINDEX2_BINARY_INDEX_H_
