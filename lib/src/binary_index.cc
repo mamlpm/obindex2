@@ -249,7 +249,8 @@ void ImageIndex::searchImagesRestrictive(const cv::Mat &descs,
                                          std::unordered_map<unsigned, ImageMatch> *img_matches,
                                          unsigned currentAgent,
                                          bool sort,
-                                         unsigned p)
+                                         unsigned p,
+                                         unsigned currentImage)
 {
   // Initializing the resulting structure
   // img_matches->resize(nimages_);
@@ -305,9 +306,10 @@ void ImageIndex::searchImagesRestrictive(const cv::Mat &descs,
 
     for (unsigned i = 0; i < inv_index_[desc].size(); i++)
     {
-      if (inv_index_[desc][i].agent_id != currentAgent || (inv_index_[desc][i].agent_id == currentAgent && (train_idx - inv_index_[desc][i].image_id) >= p))
+      int im = inv_index_[desc][i].image_id;
+      if (inv_index_[desc][i].agent_id != currentAgent || 
+        (currentImage -im) >= p)
       {
-        int im = inv_index_[desc][i].image_id;
         if (!img_matches->count(im))
         {
           ImageMatch aux;

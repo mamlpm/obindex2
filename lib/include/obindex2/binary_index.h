@@ -118,7 +118,8 @@ public:
                                std::unordered_map<unsigned, ImageMatch> *img_matches,
                                unsigned currentAgent,
                                bool sort,
-                               unsigned p);
+                               unsigned p,
+                               unsigned currentImage);
   void searchImages(const cv::Mat &descs,
                     const std::vector<cv::DMatch> &gmatches,
                     std::vector<ImageMatch> *img_matches,
