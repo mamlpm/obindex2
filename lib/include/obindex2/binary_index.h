@@ -104,6 +104,11 @@ public:
                 const std::vector<cv::KeyPoint> &kps,
                 const cv::Mat &descs);
   void addvWords(const unsigned image_id,
+              const unsigned global_image_id,
+              const unsigned agent_id,
+              const std::vector<cv::KeyPoint> &kps,
+              const cv::Mat &descs);
+  void addvWords(const unsigned image_id,
                  const unsigned global_image_id,
                  const unsigned agent_id,
                  const std::vector<cv::KeyPoint> &kps,
@@ -117,7 +122,6 @@ public:
                                const std::vector<cv::DMatch> &gmatches,
                                std::unordered_map<unsigned, ImageMatch> *img_matches,
                                unsigned currentAgent,
-                               bool sort,
                                unsigned p,
                                unsigned currentImage);
   void searchImages(const cv::Mat &descs,

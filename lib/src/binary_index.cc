@@ -84,6 +84,47 @@ void ImageIndex::addvWords(const unsigned image_id,
                            const unsigned global_image_id,
                            const unsigned agent_id,
                            const std::vector<cv::KeyPoint> &kps,
+                           const cv::Mat &descs)
+{
+  // Creating the set of BinaryDescriptors
+  for (int i = 0; i < descs.rows; i++)
+  {
+    // Creating the corresponding descriptor
+    cv::Mat desc = descs.row(i);
+    BinaryDescriptorPtr d = std::make_shared<BinaryDescriptor>(desc);
+    insertDescriptor(d);
+
+    // Creating the inverted index item
+    InvIndexItem item;
+    item.image_id = image_id;
+    item.global_image_id = global_image_id;
+    item.agent_id = agent_id;
+    item.pt = kps[i].pt;
+    item.dist = 0.0;
+    item.kp_ind = i;
+    inv_index_[d].push_back(item);
+  }
+
+  // If the trees are not initialized, we build them
+  if (!init_)
+  {
+    assert(static_cast<int>(k_) < descs.rows);
+    initTrees();
+    init_ = true;
+  }
+
+  // Deleting unstable features
+  if (purge_descriptors_)
+  {
+    purgeDescriptors(image_id);
+  }
+
+  nimages_++;
+}
+void ImageIndex::addvWords(const unsigned image_id,
+                           const unsigned global_image_id,
+                           const unsigned agent_id,
+                           const std::vector<cv::KeyPoint> &kps,
                            const cv::Mat &descs,
                            const std::vector<cv::DMatch> &matches)
 {
@@ -149,6 +190,7 @@ void ImageIndex::addvWords(const unsigned image_id,
     // Creating the inverted index item
     InvIndexItem item;
     item.image_id = image_id;
+    item.global_image_id = global_image_id;
     item.agent_id = agent_id;
     item.pt = kps[qindex].pt;
     item.dist = matches[match_ind].distance;
@@ -248,7 +290,6 @@ void ImageIndex::searchImagesRestrictive(const cv::Mat &descs,
                                          const std::vector<cv::DMatch> &gmatches,
                                          std::unordered_map<unsigned, ImageMatch> *img_matches,
                                          unsigned currentAgent,
-                                         bool sort,
                                          unsigned p,
                                          unsigned currentImage)
 {
@@ -307,8 +348,8 @@ void ImageIndex::searchImagesRestrictive(const cv::Mat &descs,
     for (unsigned i = 0; i < inv_index_[desc].size(); i++)
     {
       int im = inv_index_[desc][i].image_id;
-      if (inv_index_[desc][i].agent_id != currentAgent || 
-        (currentImage -im) >= p)
+      if (inv_index_[desc][i].agent_id != currentAgent ||
+          (currentImage - im) >= p)
       {
         if (!img_matches->count(im))
         {
@@ -317,6 +358,12 @@ void ImageIndex::searchImagesRestrictive(const cv::Mat &descs,
           img_matches->insert({im, aux});
         }
         img_matches->at(im).score += tfidf;
+
+        std::cout << "*****************************************************" << std::endl
+                  << "It is possible that image " << currentImage << " seen by agent "
+                  << currentAgent << " closes loop with stored image " << im
+                  << " seen by agent " << inv_index_[desc][i].agent_id << std::endl
+                  << "*****************************************************" << std::endl;
       }
     }
   }
