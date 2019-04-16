@@ -71,12 +71,15 @@ struct InvIndexItem
 struct ImageMatch
 {
   ImageMatch() : image_id(-1),
+                 agentId (0),
                  score(0.0) {}
 
-  explicit ImageMatch(const int id, const double sc = 0.0) : image_id(id),
+  explicit ImageMatch(const int id, const unsigned aId, const double sc = 0.0) : image_id(id),
+                                                             agentId (aId),
                                                              score(sc) {}
 
   int image_id;
+  unsigned agentId;
   double score;
 
   bool operator<(const ImageMatch &lcr) const { return score > lcr.score; }
@@ -104,10 +107,10 @@ public:
                 const std::vector<cv::KeyPoint> &kps,
                 const cv::Mat &descs);
   void addvWords(const unsigned image_id,
-              const unsigned global_image_id,
-              const unsigned agent_id,
-              const std::vector<cv::KeyPoint> &kps,
-              const cv::Mat &descs);
+                 const unsigned global_image_id,
+                 const unsigned agent_id,
+                 const std::vector<cv::KeyPoint> &kps,
+                 const cv::Mat &descs);
   void addvWords(const unsigned image_id,
                  const unsigned global_image_id,
                  const unsigned agent_id,
@@ -124,6 +127,8 @@ public:
                                unsigned currentAgent,
                                unsigned p,
                                unsigned currentImage);
+  static bool compareByScore(const obindex2::ImageMatch &a, const obindex2::ImageMatch &b);
+
   void searchImages(const cv::Mat &descs,
                     const std::vector<cv::DMatch> &gmatches,
                     std::vector<ImageMatch> *img_matches,

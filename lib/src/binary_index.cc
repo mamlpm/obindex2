@@ -355,18 +355,26 @@ void ImageIndex::searchImagesRestrictive(const cv::Mat &descs,
         {
           ImageMatch aux;
           aux.image_id = im;
+          aux.agentId = inv_index_[desc][i].agent_id;
           img_matches->insert({im, aux});
         }
         img_matches->at(im).score += tfidf;
 
-        std::cout << "*****************************************************" << std::endl
-                  << "It is possible that image " << currentImage << " seen by agent "
-                  << currentAgent << " closes loop with stored image " << im
-                  << " seen by agent " << inv_index_[desc][i].agent_id << std::endl
-                  << "*****************************************************" << std::endl;
+        // std::cout << "*****************************************************" << std::endl
+        //           << "It is possible that image " << currentImage << " seen by agent "
+        //           << currentAgent << " closes loop with stored image " << im
+        //           << " seen by agent " << inv_index_[desc][i].agent_id << " current score: " << img_matches->at(im).score << std::endl;
       }
     }
   }
+
+  // for (auto it = img_matches->begin(); it != img_matches->end(); it++)
+  // {
+  //   iMatchVect->push_back(it->second);
+  // }
+  // sort(iMatchVect->begin(), iMatchVect->end(), compareByScore);
+
+  // std::cout << "Hi i'm agent " << currentAgent << " and my " << currentImage << " seen image might close loop with " <<
 
   // if (sort) {
   //   std::sort(img_matches->begin(), img_matches->end());
