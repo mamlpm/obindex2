@@ -75,7 +75,7 @@ void ImageIndex::addImage(const unsigned image_id,
   // Deleting unstable features
   if (purge_descriptors_)
   {
-    purgeDescriptors(image_id);
+    purgeDescriptors(image_id, 1);
   }
 
   nimages_++;
@@ -116,7 +116,7 @@ void ImageIndex::addvWords(const unsigned image_id,
   // Deleting unstable features
   if (purge_descriptors_)
   {
-    purgeDescriptors(image_id);
+    purgeDescriptors(image_id, agent_id);
   }
 
   nimages_++;
@@ -201,7 +201,7 @@ void ImageIndex::addvWords(const unsigned image_id,
   // Deleting unstable features
   if (purge_descriptors_)
   {
-    purgeDescriptors(image_id);
+    purgeDescriptors(image_id, agent_id);
   }
 
   nimages_++;
@@ -280,7 +280,7 @@ void ImageIndex::addImage(const unsigned image_id,
   // Deleting unstable features
   if (purge_descriptors_)
   {
-    purgeDescriptors(image_id);
+    purgeDescriptors(image_id, 1);
   }
 
   nimages_++;
@@ -672,7 +672,7 @@ void ImageIndex::getMatchings(
   }
 }
 
-void ImageIndex::purgeDescriptors(const unsigned curr_img)
+void ImageIndex::purgeDescriptors(const unsigned curr_img, const unsigned agId)
 {
   auto it = recently_added_.begin();
 
@@ -680,7 +680,7 @@ void ImageIndex::purgeDescriptors(const unsigned curr_img)
   {
     BinaryDescriptorPtr desc = *it;
     // We assess if at least three images have passed since creation
-    if ((curr_img - inv_index_[desc][0].image_id) > 1)
+    if ((curr_img - inv_index_[desc][0].image_id) > 1 && agId == inv_index_[desc][0].agent_id)
     {
       // If so, we assess if the feature has been seen at least twice
       if (inv_index_[desc].size() < min_feat_apps_)

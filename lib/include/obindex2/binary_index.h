@@ -188,7 +188,7 @@ private:
                         unsigned checks = 32);
   void insertDescriptor(BinaryDescriptorPtr q);
   void deleteDescriptor(BinaryDescriptorPtr q);
-  void purgeDescriptors(const unsigned curr_img);
+  void purgeDescriptors(const unsigned curr_img, const unsigned agId);
 };
 
 } // namespace obindex2
